@@ -33,7 +33,6 @@ landing_css = Bundle(
 )
 
 tabler_css = Bundle(
-    'https://rawcdn.githack.com/Sumukh/Ignite/70bf953851a356e785528b56ca105042074a3d5a/appname/static/tabler/css/dashboard.css',
     'css/overrides.css',
     filters='cssmin',
     output='public/css/tabler.css'
@@ -58,10 +57,8 @@ tabler_plugins_js = Bundle(
     'tabler/js/vendors/chart.bundle.min.js',
     'tabler/js/vendors/jquery.sparkline.min.js',
     'tabler/js/vendors/jquery-jvectormap-2.0.3.min.js',
-    'tabler/js/vendors/jquery-jvectormap-de-merc.js',
     'tabler/js/vendors/jquery-jvectormap-world-mill.js',
     'tabler/js/plugins/charts-c3/js/d3.v3.min.js',
-    'tabler/js/plugins/charts-c3/js/c3.min.js',
     'tabler/js/plugins/input-mask/js/jquery.mask.min.js',
     # Other Plugins as needed.
     output='public/js/tabler-plugins.js'
