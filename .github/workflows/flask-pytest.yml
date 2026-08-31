@@ -1,4 +1,4 @@
-name: Flask PyTest CI
+name: MyTemplate CI
 
 on:
   push:
@@ -7,30 +7,79 @@ on:
     branches: ["*"]
 
 jobs:
-  build:
+  quality:
     runs-on: ubuntu-latest
+
     strategy:
       max-parallel: 2
       matrix:
-        python-version: [3.12, 3.13]
+        python-version: ["3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/cache@v4
+
+      - name: Cache pip
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install Dependencies
+            ${{ runner.os }}-python-${{ matrix.python-version }}-pip-
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Tests
+      - name: Install Playwright browsers
         run: |
-          py.test --junitxml=test-reports/results.xml --cov-report term-missing --cov=appname tests/
+          python -m playwright install --with-deps chromium
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Run Ruff
+        run: |
+          python -m ruff check appname tests --output-format=json > reports/ruff-report.json
+
+      - name: Run unit tests
+        env:
+          APPNAME_ENV: test
+        run: |
+          python -m pytest tests/test_urls.py tests/test_config.py tests/test_login.py \
+            --junitxml=reports/unit-test-results.xml
+
+      - name: Run UI tests
+        env:
+          APPNAME_ENV: test
+        run: |
+          python -m pytest tests/test_ui.py \
+            --junitxml=reports/ui-test-results.xml
+
+      - name: Run Bandit
+        run: |
+          python -m bandit -r appname -f json -o reports/bandit-report.json
+
+      - name: Run coverage
+        env:
+          APPNAME_ENV: test
+        run: |
+          python -m pytest tests/test_urls.py tests/test_config.py tests/test_login.py \
+            --cov=appname \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=html:reports/htmlcov \
+            --junitxml=reports/coverage-test-results.xml
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-python-${{ matrix.python-version }}
+          path: reports/

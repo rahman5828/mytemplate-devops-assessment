@@ -13,6 +13,13 @@ class TestURLs:
         """ Tests if the home page loads """
         expect_response('/', 200, testapp)
 
+    def test_beta(self, testapp):
+        """Tests if the beta page returns the MyTemplate message."""
+        rv = testapp.get('/beta')
+
+        assert rv.status_code == 200
+        assert rv.get_data(as_text=True) == "Welcome to MyTemplate"
+
     def test_login(self, testapp):
         """ Tests if the login page loads """
         expect_response('/login', 200, testapp)
